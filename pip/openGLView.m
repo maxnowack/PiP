@@ -44,8 +44,7 @@ void initGL(){
 
 @implementation OpenGLView
 
-- (id)initWithFrame:(NSRect)frameRect rightCLickDelegate:(id<RightCLickDelegate>) delegate{
-    
+- (id)initWithFrame:(NSRect)frameRect{
     self = [super initWithFrame:frameRect pixelFormat:pixelFormat];
 
     int VBL = 1;
@@ -55,8 +54,6 @@ void initGL(){
     alreadyCropped = false;
     imageRect = CGRectMake(0,0,200,200);
     imageAspectRatio = 0;
-    rightCLickDelegate = delegate;
-    
     return self;
 }
 
@@ -116,18 +113,14 @@ void initGL(){
         NSRect windowBounds = [[[self window] screen] visibleFrame];
         bounds = NSMakeRect(0, 0, imageRect.size.width * scale / 100, imageRect.size.height * scale / 100);
         if(windowBounds.size.width < bounds.size.width || windowBounds.size.height < bounds.size.height || bounds.size.width < kMinSize || bounds.size.height < kMinSize) goto doNormally;
-        [self.window setContentSize:bounds.size];
-        [self.window setAspectRatio:bounds.size];
+        [self.delegate setSize:bounds.size andAspectRatio:bounds.size];
     }
     else{
     doNormally:
         bounds = [self bounds];
         float screenAspectRatio = bounds.size.width / bounds.size.height;
         float arr = imageAspectRatio / screenAspectRatio;
-        if( 0.99 > arr || arr > 1.01){
-            [self.window setContentSize:NSMakeSize(bounds.size.width, bounds.size.width / imageAspectRatio)];
-            [self.window setAspectRatio:imageRect.size];
-        }
+        if( 0.99 > arr || arr > 1.01) [self.delegate setSize:NSMakeSize(bounds.size.width, bounds.size.width / imageAspectRatio) andAspectRatio:imageRect.size];
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -171,10 +164,12 @@ void initGL(){
     return NO;
 }
 
-- (void) drawImage: (CGImageRef) cgimage withRect:(CGRect) rect{
+- (bool) drawImage: (CGImageRef) cgimage withRect:(CGRect) rect{
     CIImage* myCIImage = [CIImage imageWithCGImage:cgimage];
     
     CGRect imgRect = [myCIImage extent];
+  
+    if(imgRect.size.height == 1 && imgRect.size.width == 1) return false;
 
     if(rect.size.width == 0){
         imageRect = imgRect;
@@ -214,30 +209,13 @@ void initGL(){
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
     
     [self setNeedsDisplay:YES];
+  
+    return true;
 }
 
 - (void) setScale:(NSInteger) _scale{
     scale = _scale;
     setScaleOnce = true;
-}
-
-- (void)rightMouseDown:(NSEvent *)theEvent {
-    [rightCLickDelegate rightMouseDown:theEvent];
-}
-
-- (void)magnifyWithEvent:(NSEvent *)event{
-    NSRect bounds = [self bounds];
-    NSRect windowBounds = [[[self window] screen] visibleFrame];
-
-    float factor = [event magnification];
-    float width = bounds.size.width + (bounds.size.width * factor);
-    float height = bounds.size.height + (bounds.size.height * factor);
-    if(windowBounds.size.width < width || windowBounds.size.height < height || width < kMinSize || height < kMinSize) return;
-
-    NSRect windowRect = [[self window] frame];
-    windowRect.size.width = width;
-    windowRect.size.height = height;
-    [self.window setFrame:windowRect display:YES];
 }
 
 @end

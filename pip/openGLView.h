@@ -5,23 +5,23 @@
 
 void initGL(void);
 
-@protocol RightCLickDelegate <NSObject>
-- (void)rightMouseDown:(NSEvent *)theEvent;
+@protocol GLDelegate <NSObject>
+- (void)setSize:(CGSize) size andAspectRatio:(CGSize) ar;
 @end
 
 @interface OpenGLView : NSOpenGLView{
-    GLuint FBOid;
-    CGRect imageRect;
-    NSInteger scale;
-    BOOL setScaleOnce;
-    BOOL alreadyCropped;
-    GLuint FBOTextureId;
-    GLfloat imageAspectRatio;
-    id<RightCLickDelegate> rightCLickDelegate;
+  GLuint FBOid;
+  CGRect imageRect;
+  NSInteger scale;
+  BOOL setScaleOnce;
+  BOOL alreadyCropped;
+  GLuint FBOTextureId;
+  GLfloat imageAspectRatio;
 }
-- (id)initWithFrame:(NSRect)frameRect rightCLickDelegate:(id<RightCLickDelegate>) delegate;
+@property (nonatomic) id<GLDelegate> delegate;
+- (id)initWithFrame:(NSRect)frameRect;
 - (void) setScale:(NSInteger) scale;
 - (void) drawRect: (NSRect) bounds;
-- (void) drawImage: (CGImageRef) cgimage withRect:(CGRect) rect;
+- (bool) drawImage: (CGImageRef) cgimage withRect:(CGRect) rect;
 @end
 #endif
